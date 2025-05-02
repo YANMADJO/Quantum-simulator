@@ -1,0 +1,23 @@
+Quantum Simulator Web Application
+
+Overview
+
+This is a Flask-based web application designed to simulate quantum circuits using Qiskit,
+visualize results, and provide educational resources on quantum computing. Users can run quantum simulations
+locally or on IBM Quantum hardware, explore quantum gates and algorithms,
+and access quantum computing news and scientific papers via NewsAPI and arxiv.
+
+In order to have full access to the website features:
+1- Python Environment: use Python 3.10+ with dependencies listed in requirements.txt.
+
+2- Login: Users must register and log in to access simulation tools,
+ learning resources, news, and papers.
+ The registration form requires a username, email, and password.
+
+3- NewsAPI Key (Optional): To fetch news (/news), users need a NewsAPI key
+from newsapi.org. Set it in .env as NEWSAPI_KEY. If not provided, news features are disabled.
+
+4-IBM Quantum Account: To use hardware simulation (/hardware_simulation),
+users need an IBM Quantum account and API token from quantum-computing.ibm.com.
+Set the token in .env as IBM_QUANTUM_TOKEN.
+
