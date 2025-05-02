@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Scientific Papers - QuantumHub{% endblock %}
+
+{% block content %}
+<div class="card-glass p-6">
+    <h1 class="text-2xl font-bold mb-4">Quantum Scientific Papers</h1>
+    <p class="text-base mb-4">
+        Explore recent research papers on quantum physics from arXiv.
+    </p>
+
+    <!-- Year Filter -->
+    <form method="POST" action="{{ url_for('scientific_paper') }}" class="mb-4">
+        {{ form.hidden_tag() }}
+        <div class="flex items-center gap-3">
+            <label for="year" class="font-semibold text-sm">Filter by Year:</label>
+            {{ form.year(class="p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-gray-900/50 text-black text-sm transition", id="year") }}
+            {{ form.submit(class="btn btn-primary text-sm") }}
+        </div>
+    </form>
+    <!-- Papers -->
+    <ul class="space-y-3 paper-list">
+        {% for paper in papers %}
+            <li class="card-glass p-4 search-item">
+                <h2 class="text-lg font-semibold text-indigo-400">{{ paper.title }}</h2>
+                <p class="text-sm">Authors: {{ paper.authors | join(', ') }}</p>
+                <p class="text-gray-400 text-xs">Published: {{ paper.published }}</p>
+                <p class="text-sm">{{ paper.summary }}</p>
+                <a href="{{ paper.url }}" target="_blank" class="text-indigo-400 hover:underline text-sm" aria-label="Read paper {{ paper.title }}">Read Paper</a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% block scripts %}
+<script>
+    document.getElementById('search').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.search-item').forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

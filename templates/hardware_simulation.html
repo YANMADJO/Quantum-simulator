@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}QuantumHub - Hardware Simulation{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Simulate on Real Hardware</h1>
+    <p class="text-center mb-5 mx-auto" style="max-width: 600px; color: var(--text-secondary); font-size: 1.1rem;">
+        Run your quantum circuit on IBM Quantum hardware. Don’t have an IBM Quantum account? <a href="https://quantum-computing.ibm.com/login" target="_blank" style="color: #38BDF8; text-decoration: underline;">Create one here</a>.
+    </p>
+
+    <!-- Error Messages -->
+    <div id="errorContainer">
+        {% if errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <ul class="mb-0">
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="text-center mb-5" style="color: var(--text-secondary); font-size: 1.1rem;">
+        {% if connected %}
+            <span style="color: #22C55E;">Status: Connected</span>
+        {% else %}
+            <span>Status: Not Connected</span>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Panel: Circuit and Hardware Inputs -->
+        <div class="col-lg-5">
+            <div class="card-glass p-4" style="border-radius: 1rem; backdrop-filter: blur(10px);">
+                <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Configure Hardware Simulation</h2>
+                <form method="POST" id="hardwareSimulationForm"
+                      data-fetch-backends-url="{{ url_for('fetch_backends') }}"
+                      data-run-simulation-url="{{ url_for('run_hardware_simulation') }}"
+                      data-connect-label="{{ form.connect.label.text }}"
+                      data-submit-label="{{ form.submit.label.text }}"
+                      data-connected="{{ connected|lower }}">
+                    {{ form.hidden_tag() }}
+                    <!-- Python Code -->
+                    <div class="mb-4">
+                        <label for="python_code" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">
+                            Python Code (Qiskit)
+                            <span class="text-muted" style="font-size: 0.85rem;">(Define a QuantumCircuit named 'qc')</span>
+                        </label>
+                        <div class="position-relative">
+                            {{ form.python_code(class="form-control bg-gray-900/50 border-gray-700 text-white font-mono", style="min-height: 250px; background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); resize: vertical; font-size: 0.95rem; border-radius: 0.5rem;", id="python_code") }}
+                        </div>
+                    </div>
+                    <!-- IBM Quantum Token -->
+                    <div class="mb-4">
+                        <label for="ibm_token" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">
+                            Enter your IBM Quantum Token
+                        </label>
+                        {{ form.ibm_token(class="form-control bg-gray-900/50 border-gray-700", style="background-color: #111827; border-color: var(--secondary); color: #FFFFFF; font-size: 0.95rem; border-radius: 0.5rem;", id="ibm_token", **{'autocomplete': 'off'}) }}
+                    </div>
+                    <!-- Connect Button -->
+                    <div class="mb-4 position-relative">
+                        <button type="button" class="btn btn-secondary w-100" id="connectBtn" style="font-size: 1rem; padding: 0.75rem;">
+                            <span id="connectBtnText">{{ form.connect.label.text }}</span>
+                            <span id="connectSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <!-- Simulator Type -->
+                    <div class="mb-4">
+                        <label for="simulator_type" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">
+                            Simulator Type
+                        </label>
+                        {{ form.simulator_type(class="form-select bg-gray-900/50 border-gray-700 text-white", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;", id="simulator_type") }}
+                    </div>
+                    <!-- Backend Selection -->
+                    <div class="mb-4">
+                        <label for="backend" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">
+                            IBM Quantum Backend
+                        </label>
+                        {{ form.backend(class="form-select bg-gray-900/50 border-gray-700", style="background-color: #111827; border-color: var(--secondary); color: #FFFFFF; font-size: 0.95rem; border-radius: 0.5rem;", id="backend") }}
+                        <small style="color: #FFFFFF; font-size: 0.9rem; text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                            Free-tier backends may have long queue times. Check <a href="https://quantum-computing.ibm.com/services/resources?tab=systems" target="_blank" style="color: #38BDF8;">IBM Quantum Dashboard</a> for queue status.
+                        </small>
+                    </div>
+                    <!-- Simulation Parameters -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="shots" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">
+                                Number of Shots
+                                <span class="text-muted" style="font-size: 0.85rem;">({{ config.MIN_SHOTS }}-{{ config.MAX_SHOTS }})</span>
+                            </label>
+                            {{ form.shots(class="form-control bg-gray-900/50 border-gray-700 text-white", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;", id="shots") }}
+                        </div>
+                    </div>
+                    <!-- Submit Button -->
+                    <div class="mb-4 position-relative">
+                        <button type="button" class="btn btn-primary w-100" id="submitBtn" {% if not connected %}disabled{% endif %} style="font-size: 1rem; padding: 0.75rem;">
+                            <span id="submitBtnText">{{ form.submit.label.text }}</span>
+                            <span id="loadingSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+                <!-- Back to Circuit Simulator Form -->
+                <form method="POST" action="{{ url_for('circuit_simulation') }}" id="backToCircuitForm" class="mt-2">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="python_code" id="back_python_code" value="{{ form.python_code.data | safe }}">
+                    <button type="submit" class="btn btn-secondary w-100" id="backToCircuitBtn" style="font-size: 1rem; padding: 0.75rem;">Back to Circuit Simulator</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Simulation Results -->
+        <div class="col-lg-7">
+            <div class="card-glass p-4" style="border-radius: 1rem; backdrop-filter: blur(10px);">
+                <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Simulation Results</h2>
+                <!-- Tabs for Results -->
+                <ul class="nav nav-tabs mb-4" id="resultsTab" role="tablist" style="border-bottom: 2px solid var(--secondary);">
+                    {% if circuit_diagram %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="circuit-tab" data-bs-toggle="tab" data-bs-target="#circuit" type="button" role="tab" aria-controls="circuit" aria-selected="true" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Circuit</button>
+                    </li>
+                    {% endif %}
+                    {% if histogram_sim %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="histogram-tab" data-bs-toggle="tab" data-bs-target="#histogram" type="button" role="tab" aria-controls="histogram" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Local Simulation</button>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="tab-content" id="resultsTabContent">
+                    {% if circuit_diagram %}
+                    <div class="tab-pane fade show active" id="circuit" role="tabpanel" aria-labelledby="circuit-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Circuit Diagram</h3>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ circuit_diagram }}" alt="Circuit Diagram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if histogram_sim %}
+                    <div class="tab-pane fade" id="histogram" role="tabpanel" aria-labelledby="histogram-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Ideal Simulation Histogram</h3>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ histogram_sim }}" alt="Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Simulation Counts</h3>
+                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ result_sim }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hardware_simulation.js') }}"></script>
+{% endblock %}

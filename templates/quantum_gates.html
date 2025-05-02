@@ -1,0 +1,25 @@
+
+{% extends "base.html" %}
+{% block title %}Quantum Gates - QuantumHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Quantum Gates</h1>
+    <p class="text-center mb-4" style="color: var(--text-secondary); font-size: 1rem;">Learn about the fundamental building blocks of quantum circuits.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for gate in gates %}
+        <div class="col">
+            <div class="card-glass p-4 h-100">
+                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ gate.name }}</h3>
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;">{{ gate.description }}</p>
+                <img src="data:image/png;base64,{{ gate.circuit_diagram }}" alt="{{ gate.name }} Circuit Diagram" class="img-fluid mb-2" style="max-width: 100%;">
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Matrix:</strong> {{ gate.matrix }}</p>
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Use Cases:</strong> {{ gate.use_cases | join(', ') }}</p>
+                <pre class="mb-2"><code>{{ gate.qiskit_code }}</code></pre>
+                <a href="{{ url_for('circuit_simulation') }}?gate={{ gate.name | urlencode }}" class="btn btn-outline-primary btn-sm">Simulate Gate</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

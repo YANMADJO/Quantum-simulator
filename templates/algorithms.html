@@ -1,0 +1,26 @@
+```html
+{% extends "base.html" %}
+{% block title %}Quantum Algorithms - QuantumHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Quantum Algorithms</h1>
+    <p class="text-center mb-4" style="color: var(--text-secondary); font-size: 1rem;">Discover key quantum algorithms that showcase the power of quantum computing.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for algo in algorithms %}
+        <div class="col">
+            <div class="card-glass p-4 h-100">
+                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ algo.name }}</h3>
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;">{{ algo.description }}</p>
+                <img src="data:image/png;base64,{{ algo.circuit_diagram }}" alt="{{ algo.name }} Circuit Diagram" class="img-fluid mb-2" style="max-width: 100%;">
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Complexity:</strong> {{ algo.complexity }}</p>
+                <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Use Cases:</strong> {{ algo.use_cases | join(', ') }}</p>
+                <pre class="mb-2"><code>{{ algo.qiskit_code }}</code></pre>
+                <a href="{{ url_for('circuit_simulation') }}?algorithm={{ algo.name | urlencode }}" class="btn btn-outline-primary btn-sm">Simulate Algorithm</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+```

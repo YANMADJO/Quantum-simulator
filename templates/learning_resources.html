@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Learning Resources - QuantumHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Learning Resources</h1>
+    <p class="text-center mb-4" style="color: var(--text-secondary); font-size: 1rem;">Explore curated resources to deepen your understanding of quantum computing.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for resource in resources %}
+        <div class="col">
+            <div class="card-glass p-4 h-100">
+                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ resource.title }}</h3>
+                <a href="{{ resource.url }}" target="_blank" class="btn btn-outline-primary btn-sm" aria-label="Visit {{ resource.title }}">Visit Resource</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

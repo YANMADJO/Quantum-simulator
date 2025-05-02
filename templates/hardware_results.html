@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}QuantumHub - Hardware Simulation Results{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Hardware Simulation Results</h1>
+    <p class="text-center mb-5 mx-auto" style="max-width: 600px; color: var(--text-secondary); font-size: 1.1rem;">
+        View the results of your quantum circuit executed on IBM Quantum hardware.
+    </p>
+
+    <!-- Error Messages -->
+    <div id="errorContainer">
+        {% if errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <ul class="mb-0">
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="text-center mb-5" style="color: var(--text-secondary); font-size: 1.1rem;">
+        {% if connected %}
+            <span style="color: #22C55E;">Status: Connected</span>
+        {% else %}
+            <span>Status: Not Connected</span>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Panel: Job Details -->
+        <div class="col-lg-5">
+            <div class="card-glass p-4" style="border-radius: 1rem; backdrop-filter: blur(10px);">
+                <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Job Details</h2>
+                <div class="mb-4">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Job ID</label>
+                    <input type="text" class="form-control bg-gray-900/50 border-gray-700 text-white" value="{{ job_id or 'N/A' }}" readonly style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Job Status</label>
+                    <div id="jobStatus" class="form-control bg-gray-900/50 border-gray-700 text-white" style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
+                        {{ job_status or 'Pending' }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Queue Position</label>
+                    <div id="queuePosition" class="form-control bg-gray-900/50 border-gray-700 text-white" style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
+                        {{ queue_info.position if queue_info.position is not none else 'Not available' }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Estimated Wait Time</label>
+                    <div id="estimatedWait" class="form-control bg-gray-900/50 border-gray-700 text-white" style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
+                        {{ (queue_info['estimated_wait_seconds'] // 60) ~ ' minutes' if queue_info['estimated_wait_seconds'] is not none else 'Not available' }}
+                    </div>
+                </div>
+                <!-- Back to Hardware Simulator Form -->
+                <form method="POST" action="{{ url_for('hardware_simulation') }}" class="mt-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary w-100" style="font-size: 1rem; padding: 0.75rem;">Back to Hardware Simulator</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Simulation Results -->
+        <div class="col-lg-7">
+            <div class="card-glass p-4" style="border-radius: 1rem; backdrop-filter: blur(10px);">
+                <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Simulation Results</h2>
+                <!-- Tabs for Results -->
+                <ul class="nav nav-tabs mb-4" id="resultsTab" role="tablist" style="border-bottom: 2px solid var(--secondary);">
+                    {% if circuit_diagram %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="circuit-tab" data-bs-toggle="tab" data-bs-target="#circuit" type="button" role="tab" aria-controls="circuit" aria-selected="true" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Circuit</button>
+                    </li>
+                    {% endif %}
+                    {% if histogram_sim %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="histogram-tab" data-bs-toggle="tab" data-bs-target="#histogram" type="button" role="tab" aria-controls="histogram" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Local Simulation</button>
+                    </li>
+                    {% endif %}
+                    {% if hardware_counts %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="hardware-tab" data-bs-toggle="tab" data-bs-target="#hardware" type="button" role="tab" aria-controls="hardware" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Hardware Results</button>
+                    </li>
+                    {% endif %}
+                    {% if expectation_value is not none %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="expectation-tab" data-bs-toggle="tab" data-bs-target="#expectation" type="button" role="tab" aria-controls="expectation" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Expectation Value</button>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="tab-content" id="resultsTabContent">
+                    {% if circuit_diagram %}
+                    <div class="tab-pane fade show active" id="circuit" role="tabpanel" aria-labelledby="circuit-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Circuit Diagram</h3>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ circuit_diagram }}" alt="Circuit Diagram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if histogram_sim %}
+                    <div class="tab-pane fade" id="histogram" role="tabpanel" aria-labelledby="histogram-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Ideal Simulation Histogram</h3>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ histogram_sim }}" alt="Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Simulation Counts</h3>
+                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ result_sim }}</pre>
+                    </div>
+                    {% endif %}
+                    {% if hardware_counts %}
+                    <div class="tab-pane fade" id="hardware" role="tabpanel" aria-labelledby="hardware-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Hardware Results</h3>
+                        <!-- Hardware Histogram -->
+                        {% if hardware_histogram %}
+                        <h4 class="mb-3" style="color: var(--text-primary); font-size: 1.1rem; font-weight: 500;">Hardware Histogram</h4>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ hardware_histogram }}" alt="Hardware Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                        {% endif %}
+                        <!-- Hardware Counts -->
+                        <h4 class="mb-3" style="color: var(--text-primary); font-size: 1.1rem; font-weight: 500;">Hardware Counts</h4>
+                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ hardware_counts }}</pre>
+                    </div>
+                    {% endif %}
+                    {% if expectation_value is not none %}
+                    <div class="tab-pane fade" id="expectation" role="tabpanel" aria-labelledby="expectation-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Expectation Value</h3>
+                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ expectation_value }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jobId = '{{ job_id or "" }}';
+        const errorContainer = document.getElementById('errorContainer');
+        if (jobId) {
+            const checkJobStatus = async () => {
+                try {
+                    const response = await fetch(`/job_status/${jobId}`);
+                    const data = await response.json();
+                    const jobStatusElement = document.getElementById('jobStatus');
+                    const queuePositionElement = document.getElementById('queuePosition');
+                    const estimatedWaitElement = document.getElementById('estimatedWait');
+
+                    if (response.ok) {
+                        // Update status
+                        jobStatusElement.textContent = data.status || 'Pending';
+
+                        // Update queue info
+                        if (data.queue_info) {
+                            queuePositionElement.textContent = data.queue_info.position !== null ? data.queue_info.position : 'Not available';
+                            estimatedWaitElement.textContent = data.queue_info.estimated_wait_seconds !== null ? `${Math.floor(data.queue_info.estimated_wait_seconds / 60)} minutes` : 'Not available';
+                        } else {
+                            queuePositionElement.textContent = 'Not available';
+                            estimatedWaitElement.textContent = 'Not available';
+                        }
+
+                        // Only reload for final states
+                        if (data.status === 'DONE' || data.status === 'CANCELLED') {
+                            location.reload();
+                        } else if (data.status === 'FAILED' || data.status === 'ERROR') {
+                            // Show error message but continue polling
+                            errorContainer.innerHTML = `
+                                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                                    <ul class="mb-0">
+                                        <li>Job ${jobId} reported as ${data.status}. ${data.error ? data.error : 'Please check the IBM Quantum dashboard for details.'}</li>
+                                    </ul>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                            // Continue polling to catch status changes
+                            setTimeout(checkJobStatus, 10000); // Slower polling for failed/error states
+                        } else {
+                            // Continue polling for non-final states
+                            setTimeout(checkJobStatus, 5000);
+                        }
+                    } else {
+                        // Handle HTTP errors
+                        jobStatusElement.textContent = 'Error';
+                        errorContainer.innerHTML = `
+                            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                                <ul class="mb-0">
+                                    <li>Failed to retrieve job status: ${data.error || 'Unknown error'}</li>
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        setTimeout(checkJobStatus, 10000); // Retry after delay
+                    }
+                } catch (error) {
+                    console.error('Error checking job status:', error);
+                    document.getElementById('jobStatus').textContent = 'Error';
+                    errorContainer.innerHTML = `
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                            <ul class="mb-0">
+                                <li>Network error checking job status: ${error.message}</li>
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    setTimeout(checkJobStatus, 10000); // Retry after delay
+                }
+            };
+            checkJobStatus();
+        }
+    });
+</script>
+{% endblock %}

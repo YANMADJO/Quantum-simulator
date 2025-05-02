@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}QuantumHub - Tools{% endblock %}
+
+{% block content %}
+<section class="py-4">
+    <h1 class="text-center mb-3" style="font-size: 2rem;">Quantum Tools Dashboard</h1>
+    <p class="text-center mb-4 mx-auto" style="max-width: 500px; font-size: 1rem;">Access our suite of quantum computing tools, designed for community members to explore and innovate.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        <div class="col">
+            <a href="{{ url_for('news') }}" class="text-decoration-none">
+                <div class="card-glass h-100 text-center" style="padding: 1rem;">
+                    <div class="card-body">
+                        <svg class="mb-2 mx-auto" style="width: 2rem; height: 2rem;" fill="none" stroke="#38BDF8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                        </svg>
+                        <h3 class="card-title mb-2" style="font-size: 1.25rem;">News</h3>
+                        <p class="card-text" style="font-size: 0.875rem;">Stay updated with the latest quantum breakthroughs.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('scientific_paper') }}" class="text-decoration-none">
+                <div class="card-glass h-100 text-center" style="padding: 1rem;">
+                    <div class="card-body">
+                        <svg class="mb-2 mx-auto" style="width: 2rem; height: 2rem;" fill="none" stroke="#38BDF8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3 class="card-title mb-2" style="font-size: 1.25rem;">Scientific Papers</h3>
+                        <p class="card-text" style="font-size: 0.875rem;">Dive into the latest quantum research from arXiv.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="{{ url_for('learning') }}" class="text-decoration-none">
+                <div class="card-glass h-100 text-center" style="padding: 1rem;">
+                    <div class="card-body">
+                        <svg class="mb-2 mx-auto" style="width: 2rem; height: 2rem;" fill="none" stroke="#38BDF8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        <h3 class="card-title mb-2" style="font-size: 1.25rem;">Learning</h3>
+                        <p class="card-text" style="font-size: 0.875rem;">Master quantum algorithms with interactive tutorials.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="{{ url_for('circuit_simulation') }}" class="text-decoration-none">
+                <div class="card-glass h-100 text-center" style="padding: 1rem;">
+                    <div class="card-body">
+                        <svg class="mb-2 mx-auto" style="width: 2rem; height: 2rem;" fill="none" stroke="#38BDF8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <h3 class="card-title mb-2" style="font-size: 1.25rem;">Circuit Simulation</h3>
+                        <p class="card-text" style="font-size: 0.875rem;">Build and simulate quantum circuits with ease.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us - QuantumHub{% endblock %}
+
+{% block content %}
+<div class="card-glass p-8">
+    <h1 class="text-3xl font-bold mb-4">About Us</h1>
+    <p class="text-lg mb-6">
+        QuantumHub is dedicated to making quantum computing accessible to everyone. Our mission is to empower learners, researchers, and enthusiasts with tools to explore quantum algorithms, simulate circuits, and stay updated with the latest advancements.
+    </p>
+    <p class="text-lg mb-6">
+        Founded in 2025, we combine cutting-edge technology with a passion for education to bridge the gap between quantum theory and practical application. Join us to unlock the potential of quantum computing.
+    </p>
+    <div class="text-center">
+        <a href="{{ url_for('contact') }}" class="btn btn-primary">
+            Contact Us
+        </a>
+    </div>
+</div>
+{% endblock %}

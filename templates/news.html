@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}News - QuantumHub{% endblock %}
+
+{% block content %}
+<div class="card-glass">
+    <h1 class="mb-2">Quantum News</h1>
+    <p class="mb-2">
+        Stay updated with the latest breakthroughs in quantum computing.
+    </p>
+    <!-- Search by Keyword -->
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control p-1 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-gray-800 text-black transition" placeholder="Search by keyword..." style="font-size: 0.875rem; pointer-events: auto; color: black;">
+    </div>
+    <!-- Articles -->
+    <div class="space-y-2" id="articleList">
+        {% for article in articles %}
+            <div class="card-glass p-2 article-item">
+                <h2 class="font-semibold text-indigo-400 mb-1">
+                    {{ article.title }}
+                </h2>
+                <p class="mb-1">{{ article.summary }}</p>
+                <p class="text-gray-400 text-xs mb-1">{{ article.publishedAt }}</p>
+                <a href="{{ article.url }}" target="_blank" class="text-indigo-400 hover:underline" aria-label="Read More Link" style="pointer-events: auto;">Read More</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const articleList = document.getElementById('articleList');
+        const articles = articleList.getElementsByClassName('article-item');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value.toLowerCase();
+
+            Array.from(articles).forEach(article => {
+                const title = article.querySelector('h2').textContent.toLowerCase();
+                const summary = article.querySelector('p').textContent.toLowerCase();
+
+                if (title.includes(searchTerm) || summary.includes(searchTerm)) {
+                    article.style.display = 'block';
+                } else {
+                    article.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

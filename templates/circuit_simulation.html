@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}QuantumHub - Circuit Simulation{% endblock %}
+
+{% block content %}
+<section class="py-4">
+    <h1 class="text-center mb-3" style="color: var(--text-primary);">Quantum Circuit Simulator</h1>
+    <p class="text-center mb-4 mx-auto" style="max-width: 600px; color: var(--text-secondary);">
+        Design and simulate quantum circuits using Qiskit Python code. Select a predefined circuit or modify the code below to get started.
+    </p>
+
+    <!-- Error Messages -->
+    <div id="errorContainer">
+        {% if errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444;">
+                <ul class="mb-0">
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="d-none text-center my-3">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-2">Running simulation, please wait...</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Panel: Circuit Builder -->
+        <div class="col-lg-5">
+            <div class="card-glass p-4">
+                <h2 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem;">Build Your Circuit</h2>
+                <form method="POST" id="simulationForm">
+                    {{ form.hidden_tag() }}
+                    <!-- Predefined Circuit -->
+                    <div class="mb-3">
+                        <label for="predefined_circuit" class="form-label" style="color: var(--text-secondary);">
+                            Predefined Circuit
+                            <span class="text-muted" style="font-size: 0.75rem;">(Select and load an example)</span>
+                        </label>
+                        <div class="d-flex">
+                            {{ form.predefined_circuit(class="form-select bg-gray-900/50 border-gray-700 text-white me-2", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary);", id="predefined_circuit") }}
+                            <button type="button" class="btn btn-secondary" id="loadCircuitBtn">Load Circuit</button>
+                        </div>
+                    </div>
+                    <!-- Python Code -->
+                    <div class="mb-3">
+                        <label for="python_code" class="form-label" style="color: var(--text-secondary);">
+                            Python Code (Qiskit)
+                            <span class="text-muted" style="font-size: 0.75rem;">(Define a QuantumCircuit named 'qc')</span>
+                        </label>
+                        <div class="position-relative">
+                            {{ form.python_code(class="form-control bg-gray-900/50 border-gray-700 text-white font-mono", style="min-height: 200px; background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); resize: vertical;", id="python_code", rows="10") }}
+
+                        </div>
+                    </div>
+                    <!-- Simulation Parameters -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="shots" class="form-label" style="color: var(--text-secondary);">
+                                Number of Shots
+                                <span class="text-muted" style="font-size: 0.75rem;">({{ config.MIN_SHOTS }}-{{ config.MAX_SHOTS }})</span>
+                            </label>
+                            {{ form.shots(class="form-control bg-gray-900/50 border-gray-700 text-white", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary);", id="shots") }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="noise_prob" class="form-label" style="color: var(--text-secondary);">
+                                Noise Probability
+                                <span class="text-muted" style="font-size: 0.75rem;">(0.0-1.0)</span>
+                            </label>
+                            {{ form.noise_prob(class="form-control bg-gray-900/50 border-gray-700 text-white", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary);", id="noise_prob") }}
+                        </div>
+                    </div>
+                    <!-- Visualization Options -->
+                    <div class="mb-3">
+                        <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Visualization Options</h3>
+                        <div class="row">
+                            <div class="col-6 form-check mb-2">
+                                {{ form.show_bloch(class="form-check-input", style="border-color: var(--secondary);") }}
+                                <label class="form-check-label" style="color: var(--text-secondary);">{{ form.show_bloch.label.text }}</label>
+                            </div>
+                            <div class="col-6 form-check mb-2">
+                                {{ form.show_density_matrix(class="form-check-input", style="border-color: var(--secondary);") }}
+                                <label class="form-check-label" style="color: var(--text-secondary);">{{ form.show_density_matrix.label.text }}</label>
+                            </div>
+                            <div class="col-6 form-check mb-2">
+                                {{ form.show_statevector(class="form-check-input", style="border-color: var(--secondary);") }}
+                                <label class="form-check-label" style="color: var(--text-secondary);">{{ form.show_statevector.label.text }}</label>
+                            </div>
+                            <div class="col-6 form-check mb-2">
+                                {{ form.show_unitary(class="form-check-input", style="border-color: var(--secondary);") }}
+                                <label class="form-check-label" style="color: var(--text-secondary);">{{ form.show_unitary.label.text }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Submit Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100" id="runSimulationBtn">Run Simulation</button>
+                    </div>
+                </form>
+                <!-- Form for Run on Hardware -->
+                <form method="POST" action="{{ url_for('hardware_simulation') }}" id="hardwareForm" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="python_code" id="hardware_python_code" value="{{ form.python_code.data | safe }}">
+                    <button type="submit" class="btn btn-secondary w-100" id="runOnHardwareBtn">Run on Hardware</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Simulation Results -->
+        <div class="col-lg-7">
+            {% if circuit_diagram or qasm_code or histogram_sim or bloch_img or density_matrix_img or statevector_img or unitary_str %}
+                <div class="card-glass p-4">
+                    <h2 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem;">Simulation Results</h2>
+                    <!-- Tabs for Results -->
+                    <ul class="nav nav-tabs mb-3" id="resultsTab" role="tablist">
+                        {% if circuit_diagram %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="circuit-tab" data-bs-toggle="tab" data-bs-target="#circuit" type="button" role="tab" aria-controls="circuit" aria-selected="true" style="color: var(--text-secondary);">Circuit</button>
+                            </li>
+                        {% endif %}
+                        {% if histogram_sim %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="histogram-tab" data-bs-toggle="tab" data-bs-target="#histogram" type="button" role="tab" aria-controls="histogram" aria-selected="false" style="color: var(--text-secondary);">Histogram</button>
+                            </li>
+                        {% endif %}
+                        {% if bloch_img %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="bloch-tab" data-bs-toggle="tab" data-bs-target="#bloch" type="button" role="tab" aria-controls="bloch" aria-selected="false" style="color: var(--text-secondary);">Bloch Sphere</button>
+                            </li>
+                        {% endif %}
+                        {% if density_matrix_img %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="density-tab" data-bs-toggle="tab" data-bs-target="#density" type="button" role="tab" aria-controls="density" aria-selected="false" style="color: var(--text-secondary);">Density Matrix</button>
+                            </li>
+                        {% endif %}
+                        {% if statevector_img %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="statevector-tab" data-bs-toggle="tab" data-bs-target="#statevector" type="button" role="tab" aria-controls="statevector" aria-selected="false" style="color: var(--text-secondary);">Statevector</button>
+                            </li>
+                        {% endif %}
+                        {% if unitary_str %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="unitary-tab" data-bs-toggle="tab" data-bs-target="#unitary" type="button" role="tab" aria-controls="unitary" aria-selected="false" style="color: var(--text-secondary);">Unitary</button>
+                            </li>
+                        {% endif %}
+                        {% if qasm_code %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="qasm-tab" data-bs-toggle="tab" data-bs-target="#qasm" type="button" role="tab" aria-controls="qasm" aria-selected="false" style="color: var(--text-secondary);">QASM Code</button>
+                            </li>
+                        {% endif %}
+                    </ul>
+                    <div class="tab-content" id="resultsTabContent">
+                        <!-- Circuit Tab -->
+                        {% if circuit_diagram %}
+                            <div class="tab-pane fade show active" id="circuit" role="tabpanel" aria-labelledby="circuit-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Circuit Diagram</h3>
+                                <img src="data:image/png;base64,{{ circuit_diagram }}" alt="Circuit Diagram" class="img-fluid rounded mb-3">
+                            </div>
+                        {% endif %}
+                        <!-- Histogram Tab -->
+                        {% if histogram_sim %}
+                            <div class="tab-pane fade" id="histogram" role="tabpanel" aria-labelledby="histogram-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Measurement Histogram</h3>
+                                <img src="data:image/png;base64,{{ histogram_sim }}" alt="Histogram" class="img-fluid rounded mb-3">
+                                {% if result_sim %}
+                                    <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Counts</h3>
+                                    <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ result_sim }}</pre>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <!-- Bloch Sphere Tab -->
+                        {% if bloch_img %}
+                            <div class="tab-pane fade" id="bloch" role="tabpanel" aria-labelledby="bloch-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Bloch Sphere</h3>
+                                <img src="data:image/png;base64,{{ bloch_img }}" alt="Bloch Sphere" class="img-fluid rounded">
+                            </div>
+                        {% endif %}
+                        <!-- Density Matrix Tab -->
+                        {% if density_matrix_img %}
+                            <div class="tab-pane fade" id="density" role="tabpanel" aria-labelledby="density-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Density Matrix</h3>
+                                <img src="data:image/png;base64,{{ density_matrix_img }}" alt="Density Matrix" class="img-fluid rounded">
+                            </div>
+                        {% endif %}
+                        <!-- Statevector Tab -->
+                        {% if statevector_img %}
+                            <div class="tab-pane fade" id="statevector" role="tabpanel" aria-labelledby="statevector-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Statevector Visualization</h3>
+                                <img src="data:image/png;base64,{{ statevector_img }}" alt="Statevector Visualization" class="img-fluid rounded">
+                            </div>
+                        {% endif %}
+                        <!-- Unitary Matrix Tab -->
+                        {% if unitary_str %}
+                            <div class="tab-pane fade" id="unitary" role="tabpanel" aria-labelledby="unitary-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Unitary Matrix</h3>
+                                <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ unitary_str }}</pre>
+                            </div>
+                        {% endif %}
+                        <!-- QASM Code Tab -->
+                        {% if qasm_code %}
+                            <div class="tab-pane fade" id="qasm" role="tabpanel" aria-labelledby="qasm-tab">
+                                <h3 class="mb-2" style="color: var(--text-primary); font-size: 1rem;">Transpiled QASM Code</h3>
+                                <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ qasm_code }}</pre>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card-glass p-4 text-center">
+                    <p style="color: var(--text-secondary);">Run a simulation to see results here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/circuit_simulation.js') }}"></script>
+{% endblock %}

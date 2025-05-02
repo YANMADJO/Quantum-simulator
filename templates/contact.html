@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact - QuantumHub{% endblock %}
+
+{% block content %}
+<section class="py-4 mb-4">
+    <div class="card-glass p-4 mx-auto" style="max-width: 800px;">
+        <h1 class="mb-3 text-center" style="font-size: 1.75rem;">Contact Us</h1>
+        <p class="mb-4 text-center" style="font-size: 0.875rem; color: var(--text-secondary);">
+            Have questions or feedback? Reach out to our team, and we'll get back to you as soon as possible.
+        </p>
+        <form method="POST" action="{{ url_for('contact') }}" class="d-flex flex-column gap-3">
+            {{ form.hidden_tag() }}
+            <div>
+                <label for="name" class="form-label font-semibold mb-1" style="color: var(--text-primary);">Name</label>
+                {{ form.name(class="form-control w-100 p-2", style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary);", id="name", **{'aria-required': 'true'}) }}
+            </div>
+            <div>
+                <label for="email" class="form-label font-semibold mb-1" style="color: var(--text-primary);">Email</label>
+                {{ form.email(class="form-control w-100 p-2", style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary);", id="email", **{'aria-required': 'true'}) }}
+            </div>
+            <div>
+                <label for="message" class="form-label font-semibold mb-1" style="color: var(--text-primary);">Message</label>
+                {{ form.message(class="form-control w-100 p-2", style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary);", id="message", rows="5", **{'aria-required': 'true'}) }}
+            </div>
+            <div class="text-center">
+                {{ form.submit(class="btn btn-primary mt-2") }}
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

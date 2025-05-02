@@ -1,0 +1,120 @@
+
+{% extends "base.html" %}
+{% block title %}Learning Dashboard - QuantumHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Learning Dashboard</h1>
+    <p class="text-center mb-4" style="color: var(--text-secondary); font-size: 1rem;">Explore quantum gates, algorithms, and resources to advance your quantum computing knowledge.</p>
+
+    <!-- Search Bar -->
+    <div class="mb-4">
+        <input type="text" id="searchInput" class="form-control card-glass" placeholder="Search gates, algorithms, or resources..." style="color: var(--text-primary); background: rgba(42, 52, 71, 0.8); border: 1px solid rgba(45, 212, 191, 0.3);">
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4 justify-content-center" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" href="#gates" data-bs-toggle="tab" role="tab" aria-label="Quantum Gates Tab">Quantum Gates</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#algorithms" data-bs-toggle="tab" role="tab" aria-label="Quantum Algorithms Tab">Quantum Algorithms</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#resources" data-bs-toggle="tab" role="tab" aria-label="Learning Resources Tab">Learning Resources</a>
+        </li>
+
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Quantum Gates -->
+        <div class="tab-pane fade show active" id="gates" role="tabpanel">
+            <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem;">Quantum Gates</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-4" id="gatesList">
+                {% for gate in gates %}
+                <div class="col gate-item">
+                    <div class="card-glass p-4 h-100">
+                        <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ gate.name }}</h3>
+                        <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;">{{ gate.description }}</p>
+                        <img src="data:image/png;base64,{{ gate.circuit_diagram }}" alt="{{ gate.name }} Circuit Diagram" class="img-fluid mb-2" style="max-width: 100%;">
+                        <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Use Cases:</strong> {{ gate.use_cases | join(', ') }}</p>
+                        <a href="{{ url_for('circuit_simulation') }}?gate={{ gate.name | urlencode }}" class="btn btn-outline-primary btn-sm">Simulate Gate</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quantum Algorithms -->
+        <div class="tab-pane fade" id="algorithms" role="tabpanel">
+            <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem;">Quantum Algorithms</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-4" id="algorithmsList">
+                {% for algo in algorithms %}
+                <div class="col algorithm-item">
+                    <div class="card-glass p-4 h-100">
+                        <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ algo.name }}</h3>
+                        <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;">{{ algo.description }}</p>
+                        <img src="data:image/png;base64,{{ algo.circuit_diagram }}" alt="{{ algo.name }} Circuit Diagram" class="img-fluid mb-2" style="max-width: 100%;">
+                        <p class="mb-2" style="color: var(--text-secondary); font-size: 0.875rem;"><strong>Use Cases:</strong> {{ algo.use_cases | join(', ') }}</p>
+                        <a href="{{ url_for('circuit_simulation') }}?algorithm={{ algo.name | urlencode }}" class="btn btn-outline-primary btn-sm">Simulate Algorithm</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Learning Resources -->
+        <div class="tab-pane fade" id="resources" role="tabpanel">
+            <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem;">Learning Resources</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-4" id="resourcesList">
+                {% for resource in resources %}
+                <div class="col resource-item">
+                    <div class="card-glass p-4 h-100">
+                        <h3 class="mb-2" style="color: var(--text-primary); font-size: 1.25rem;">{{ resource.title }}</h3>
+                        <a href="{{ resource.url }}" target="_blank" class="btn btn-outline-primary btn-sm">Visit Resource</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const gatesList = document.getElementById('gatesList');
+    const algorithmsList = document.getElementById('algorithmsList');
+    const resourcesList = document.getElementById('resourcesList');
+    const gateItems = gatesList.getElementsByClassName('gate-item');
+    const algorithmItems = algorithmsList.getElementsByClassName('algorithm-item');
+    const resourceItems = resourcesList.getElementsByClassName('resource-item');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = searchInput.value.toLowerCase();
+
+        // Filter Gates
+        Array.from(gateItems).forEach(item => {
+            const name = item.querySelector('h3').textContent.toLowerCase();
+            const description = item.querySelector('p').textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || description.includes(searchTerm)) ? 'block' : 'none';
+        });
+
+        // Filter Algorithms
+        Array.from(algorithmItems).forEach(item => {
+            const name = item.querySelector('h3').textContent.toLowerCase();
+            const description = item.querySelector('p').textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || description.includes(searchTerm)) ? 'block' : 'none';
+        });
+
+        // Filter Resources
+        Array.from(resourceItems).forEach(item => {
+            const title = item.querySelector('h3').textContent.toLowerCase();
+            item.style.display = title.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

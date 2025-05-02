@@ -1,0 +1,17 @@
+Flask==3.1.0
+Flask-Caching==2.3.1
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+qiskit==2.0.0
+qiskit-aer==0.17.0
+qiskit-ibm-runtime==0.38.0
+numpy==2.2.5
+matplotlib==3.10.1
+bcrypt==4.3.0
+arxiv==2.2.0
+newsapi-python==0.2.7  # Optional
+SQLAlchemy==2.0.40
+WTForms==3.2.1
+requests==2.32.3
+cryptography==44.0.2

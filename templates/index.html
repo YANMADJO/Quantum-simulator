@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}QuantumHub - Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="position-relative text-white py-5 mb-4" style="background: var(--gradient); border-radius: 12px;">
+    <div class="text-center py-4">
+        <h1 class="mb-3">Welcome to QuantumHub</h1>
+        <p class="lead mb-4 mx-auto" style="max-width: 600px;">Unlock the future of quantum computing—join our community to access cutting-edge tools and resources.</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{{ url_for('tools') }}" class="btn btn-primary btn-lg">Explore Tools</a>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="py-4 mb-4">
+    <h2 class="text-center mb-4 position-relative">
+        Our Services
+        <span class="position-absolute start-50 translate-middle-x" style="bottom: -8px; width: 100px; height: 3px; background: var(--gradient);"></span>
+    </h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        <!-- Service 1 -->
+        <div class="col">
+            <div class="card-glass h-100 p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                            <path d="M12 2a10 10 0 0 0-7 17.32M12 2a10 10 0 0 1 7 17.32M12 2v20"/>
+                        </svg>
+                        <h3 class="card-title mb-0" style="color: var(--text-primary); font-size: 1.1rem;">Quantum Computing Tools</h3>
+                    </div>
+                    <p class="card-text flex-grow-1">Access a suite of advanced tools for quantum circuit design, simulation, and optimization.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Service 2 -->
+        <div class="col">
+            <div class="card-glass h-100 p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                            <path d="M12 6v12M4 12h16"/>
+                        </svg>
+                        <h3 class="card-title mb-0" style="color: var(--text-primary); font-size: 1.1rem;">Learning Resources</h3>
+                    </div>
+                    <p class="card-text flex-grow-1">Explore tutorials, articles, and guides on quantum computing concepts and applications.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Service 3 -->
+        <div class="col">
+            <div class="card-glass h-100 p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                        </svg>
+                        <h3 class="card-title mb-0" style="color: var(--text-primary); font-size: 1.1rem;">Community Collaboration</h3>
+                    </div>
+                    <p class="card-text flex-grow-1">Join a network of quantum enthusiasts to collaborate on projects and share insights.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service 4: Quantum News Updates -->
+        <div class="col">
+            <div class="card-glass h-100 p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                            <path d="M3 3h18v18H3zM7 7h10v2H7zM7 11h10v2H7zM7 15h6v2H7z"/>
+                        </svg>
+                        <h3 class="card-title mb-0" style="color: var(--text-primary); font-size: 1.1rem;">Quantum News Updates</h3>
+                    </div>
+                    <p class="card-text flex-grow-1">Get the latest news and breakthroughs in the quantum computing industry.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Service 6: Scientific Papers Access -->
+        <div class="col">
+            <div class="card-glass h-100 p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                            <path d="M4 4h16v16H4zM4 8h16M8 8v12"/>
+                        </svg>
+                        <h3 class="card-title mb-0" style="color: var(--text-primary); font-size: 1.1rem;">Scientific Papers Access</h3>
+                    </div>
+                    <p class="card-text flex-grow-1">Access a curated collection of quantum computing research papers and studies.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-4 mb-4 text-center" style="background: var(--bg-card); border-radius: 12px;">
+    <h2 class="mb-3 position-relative">
+        Ready to Explore Quantum Computing?
+        <span class="position-absolute start-50 translate-middle-x" style="bottom: -8px; width: 100px; height: 3px; background: var(--gradient);"></span>
+    </h2>
+    <p class="mb-4">Join our community to access powerful tools and learning resources.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Sign Up</a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">Log In</a>
+    </div>
+</section>
+
+<!-- Latest News Section -->
+<section class="py-4 mb-4">
+    <h2 class="text-center mb-4 position-relative">
+        Latest Quantum News
+        <span class="position-absolute start-50 translate-middle-x" style="bottom: -8px; width: 100px; height: 3px; background: var(--gradient);"></span>
+    </h2>
+    {% if articles %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+            {% for article in articles %}
+                <div class="col">
+                    <div class="card-glass h-100 p-3">
+                        <div class="card-body">
+                            <h3 class="card-title mb-2" style="color: var(--text-primary); font-size: 1.1rem;">{{ article.title | truncate(50) }}</h3>
+                            <p class="card-text mb-2">{{ article.summary | truncate(80) }}</p>
+                            <p class="card-text mb-2"><small>Published: {{ article.publishedAt }}</small></p>
+                            <a href="{{ article.url }}" target="_blank" class="btn btn-outline-primary btn-sm">Read More</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No recent news articles available. Check back later!
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

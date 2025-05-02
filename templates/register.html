@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Register - QuantumHub{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-100">
+    <div class="card-glass p-4 w-100" style="max-width: 400px;">
+        <h1 class="text-center mb-4">Register</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('register') }}">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                {{ form.username(class="form-control", id="username", placeholder="Choose a username", **{'aria-required': 'true'}) }}
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                {{ form.email(class="form-control", id="email", placeholder="Enter your email", **{'aria-required': 'true'}) }}
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                {{ form.password(class="form-control", id="password", placeholder="Create a password", **{'aria-required': 'true'}) }}
+            </div>
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                {{ form.confirm_password(class="form-control", id="confirm_password", placeholder="Confirm your password", **{'aria-required': 'true'}) }}
+            </div>
+            <div class="d-grid mb-3">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+        <p class="text-center text-secondary mt-3">
+            Already have an account? <a href="{{ url_for('login') }}" class="text-primary">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
