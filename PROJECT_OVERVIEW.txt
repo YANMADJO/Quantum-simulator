@@ -19,5 +19,5 @@ from newsapi.org. Set it in .env as NEWSAPI_KEY. If not provided, news features 
 
 4-IBM Quantum Account: To use hardware simulation (/hardware_simulation),
 users need an IBM Quantum account and API token from quantum-computing.ibm.com.
-Set the token in .env as IBM_QUANTUM_TOKEN.
+Set the token in .env as IBM_QUANTUM_TOKEN. Moreover, the users can submit the JOB ID after completion to retrieve the results.
 
