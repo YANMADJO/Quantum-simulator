@@ -318,3 +318,47 @@ def qasm_to_python_code(circuit, circuit_name):
     return python_code
 
 
+def generate_comparison_histogram(counts_sim, counts_hw):
+    """
+    Generate a comparison histogram for simulated and hardware counts.
+
+    Args:
+        counts_sim (dict): Counts from local simulation.
+        counts_hw (dict): Counts from hardware execution.
+
+    Returns:
+        str: Base64-encoded image of the comparison histogram, or None if generation fails.
+    """
+    try:
+        # Create a figure for the comparison histogram
+        fig, ax = plt.subplots(figsize=(12, 8), dpi=150)
+
+        # Combine keys from both counts to ensure all states are displayed
+        all_states = sorted(set(counts_sim.keys()) | set(counts_hw.keys()))
+
+        # Prepare data for plotting
+        sim_values = [counts_sim.get(state, 0) for state in all_states]
+        hw_values = [counts_hw.get(state, 0) for state in all_states]
+
+        # Set bar positions
+        bar_width = 0.35
+        x = np.arange(len(all_states))
+
+        # Plot bars
+        ax.bar(x - bar_width / 2, sim_values, bar_width, label='Simulation', color='#1E88E5')
+        ax.bar(x + bar_width / 2, hw_values, bar_width, label='Hardware', color='#D81B60')
+
+        # Customize plot
+        ax.set_xlabel('State')
+        ax.set_ylabel('Counts')
+        ax.set_title('Comparison of Simulation vs Hardware Results')
+        ax.set_xticks(x)
+        ax.set_xticklabels(all_states, rotation=45)
+        ax.legend()
+
+        # Convert to base64
+        return figure_to_base64(fig)
+    except Exception as e:
+        logging.error(f"Failed to generate comparison histogram: {str(e)}")
+        return None
+

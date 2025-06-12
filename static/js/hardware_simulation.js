@@ -1,6 +1,5 @@
-// static/js/hardware_simulation.js
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Hardware simulation script loaded'); // Debug log
+    console.log('Hardware simulation script loaded');
 
     const textarea = document.getElementById('python_code');
     textarea.addEventListener('input', function() {
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsTabContent = document.getElementById('resultsTabContent');
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
-    // Get dynamic values from form data attributes
     const form = document.getElementById('hardwareSimulationForm');
     const fetchBackendsUrl = form.dataset.fetchBackendsUrl;
     const runSimulationUrl = form.dataset.runSimulationUrl;
@@ -47,13 +45,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     connectBtn.addEventListener('click', function(event) {
         event.preventDefault();
-        console.log('Connect button clicked'); // Debug log
+        console.log('Connect button clicked');
         const token = document.getElementById('ibm_token').value.trim();
-        if (!token) {
+        if (!token || token.length < 10) {
             errorContainer.innerHTML = `
-                <div  class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
-                        <li>IBM Quantum token is required.</li>
+                        <li>Please enter a valid IBM Quantum token (minimum 10 characters).</li>
                     </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>`;
@@ -76,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Fetch backends response:', response.status); // Debug log
+            console.log('Fetch backends response:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -92,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.backends.forEach(backend => {
                     const option = document.createElement('option');
                     option.value = backend[0];
-                    option.text = backend[1];
+                    option.text = `${backend[1]} (${backend.num_qubits || 'N/A'} qubits, ${backend.pending_jobs || 'N/A'} jobs queued)`;
                     backendSelect.appendChild(option);
                 });
                 submitBtn.disabled = false;
@@ -109,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 isConnected = false;
                 connectionStatus.innerHTML = '<span style="color: #EF4444;">Status: Not Connected</span>';
                 errorContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                         <ul class="mb-0">
                             <li>${data.message}</li>
                         </ul>
@@ -118,14 +116,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Fetch backends error:', error); // Debug log
+            console.error('Fetch backends error:', error);
             connectBtn.disabled = false;
             connectBtnText.textContent = connectBtnLabel;
             connectSpinner.classList.add('d-none');
             isConnected = false;
             connectionStatus.innerHTML = '<span style="color: #EF4444;">Status: Not Connected</span>';
             errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
                         <li>Failed to connect to IBM Quantum: ${error.message.includes('401') ? 'Invalid token. Please check and try again.' : error.message}</li>
                     </ul>
@@ -136,10 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     submitBtn.addEventListener('click', function(event) {
         event.preventDefault();
-        console.log('Submit button clicked'); // Debug log
+        console.log('Submit button clicked');
         if (!isConnected) {
             errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
                         <li>Please connect to IBM Quantum first.</li>
                     </ul>
@@ -152,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const simulatorType = document.getElementById('simulator_type').value;
         if (!pythonCode) {
             errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
                         <li>Please provide Python code to simulate.</li>
                     </ul>
@@ -160,9 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>`;
             return;
         }
-        if (simulatorType === 'sampler' && !pythonCode.includes('measure') && !pythonCode.includes('measure_all')) {
+        if (simulatorType === 'sampler' && !pythonCode.match(/\b(measure|measure_all)\b/)) {
             errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
                         <li>Circuit must include measurements for Sampler simulation. Add qc.measure() or qc.measure_all().</li>
                     </ul>
@@ -193,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
         .then(response => {
-            console.log('Run simulation response:', response.status); // Debug log
+            console.log('Run simulation response:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
                     throw new Error(`HTTP ${response.status}: ${text}`);
@@ -207,50 +205,24 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingSpinner.classList.add('d-none');
 
             if (data.success) {
-                resultsTab.innerHTML = `
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="circuit-tab" data-bs-toggle="tab" data-bs-target="#circuit" type="button" role="tab" aria-controls="circuit" aria-selected="true" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Circuit</button>
-                    </li>`;
-                resultsTabContent.innerHTML = `
-                    <div class="tab-pane fade show active" id="circuit" role="tabpanel" aria-labelledby="circuit-tab">
-                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Circuit Diagram</h3>
-                        <div class="d-flex justify-content-center">
-                            <img src="data:image/png;base64,${data.circuit_diagram}" alt="Circuit Diagram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
-                        </div>
-                    </div>`;
-                if (data.simulation_counts && data.histogram_sim) {
-                    resultsTab.innerHTML += `
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="histogram-tab" data-bs-toggle="tab" data-bs-target="#histogram" type="button" role="tab" aria-controls="histogram" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Local Simulation</button>
-                        </li>`;
-                    resultsTabContent.innerHTML += `
-                        <div class="tab-pane fade" id="histogram" role="tabpanel" aria-labelledby="histogram-tab">
-                            <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Ideal Simulation Histogram</h3>
-                            <div class="d-flex justify-content-center">
-                                <img src="data:image/png;base64,${data.histogram_sim}" alt="Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
-                            </div>
-                            <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Simulation Counts</h3>
-                            <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">${JSON.stringify(data.simulation_counts, null, 2)}</pre>
-                        </div>`;
-                }
                 errorContainer.innerHTML = `
                     <div class="alert alert-info alert-dismissible fade show mb-4" role="alert" style="background: rgba(59, 130, 246, 0.2); border-color: #3B82F6; font-size: 1rem;">
                         <ul class="mb-0">
-                            <li>Job submitted (ID: ${data.job_id}). Please wait, as it may be queued due to backend demand. Check <a href="https://quantum-computing.ibm.com/services/resources?tab=systems" target="_blank">IBM Quantum Dashboard</a> for status.</li>
+                            <li>Job submitted (ID: ${data.job_id}). Please enter this ID in the Hardware Results page to retrieve results.</li>
                         </ul>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>`;
                 if (data.redirect) window.location.href = data.redirect;
             } else {
-                let errorMessage = data.message || 'Unknown error occurred.';
-                if (data.message.includes('Invalid token') || data.message.includes('Session not initialized')) {
+                let errorMessage = data.message || 'Unknown error occurred';
+                if (data.message.includes('Invalid token') || (data.error && data.error.includes('Session not initialized'))) {
                     errorMessage = 'Invalid IBM Quantum token or session expired. Please reconnect with a valid token.';
                     isConnected = false;
                     connectionStatus.innerHTML = '<span style="color: #EF4444;">Status: Not Connected</span>';
                     submitBtn.disabled = true;
                 }
                 errorContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                         <ul class="mb-0">
                             <li>${errorMessage}</li>
                         </ul>
@@ -259,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Run simulation error:', error); // Debug log
+            console.error('Run simulation error:', error);
             submitBtn.disabled = false;
             submitBtnText.textContent = submitBtnLabel;
             loadingSpinner.classList.add('d-none');
@@ -269,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Not connected to IBM Quantum. Please reconnect with a valid token.' :
                 `Failed to submit job: ${error.message}`;
             errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                     <ul class="mb-0">
                         <li>${errorMessage}</li>
                     </ul>

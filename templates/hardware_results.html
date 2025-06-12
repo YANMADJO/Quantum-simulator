@@ -6,13 +6,13 @@
 <section class="py-5">
     <h1 class="text-center mb-4" style="color: var(--text-primary); font-size: 2.5rem; font-weight: 700;">Hardware Simulation Results</h1>
     <p class="text-center mb-5 mx-auto" style="max-width: 600px; color: var(--text-secondary); font-size: 1.1rem;">
-        View the results of your quantum circuit executed on IBM Quantum hardware.
+        Enter the Job ID from your IBM Quantum job to retrieve results.
     </p>
 
     <!-- Error Messages -->
     <div id="errorContainer">
         {% if errors %}
-            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
                 <ul class="mb-0">
                     {% for error in errors %}
                         <li>{{ error }}</li>
@@ -37,10 +37,20 @@
         <div class="col-lg-5">
             <div class="card-glass p-4" style="border-radius: 1rem; backdrop-filter: blur(10px);">
                 <h2 class="mb-4" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Job Details</h2>
-                <div class="mb-4">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Job ID</label>
-                    <input type="text" class="form-control bg-gray-900/50 border-gray-700 text-white" value="{{ job_id or 'N/A' }}" readonly style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
-                </div>
+                <!-- Job ID Input Form -->
+                <form method="POST" id="jobIdForm">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-4">
+                        <label for="job_id" class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Enter Job ID</label>
+                        {{ form.job_id(class="form-control bg-gray-900/50 border-gray-700 text-white", style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;", id="job_id") }}
+                    </div>
+                    <div class="mb-4">
+                        <button type="submit" class="btn btn-primary w-100" id="retrieveBtn" style="font-size: 1rem; padding: 0.75rem;">
+                            <span id="retrieveBtnText">{{ form.submit.label.text }}</span>
+                            <span id="retrieveSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
                 <div class="mb-4">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 1rem;">Job Status</label>
                     <div id="jobStatus" class="form-control bg-gray-900/50 border-gray-700 text-white" style="background-color: #111827; border-color: var(--secondary); color: var(--text-secondary); font-size: 0.95rem; border-radius: 0.5rem;">
@@ -83,9 +93,14 @@
                         <button class="nav-link" id="histogram-tab" data-bs-toggle="tab" data-bs-target="#histogram" type="button" role="tab" aria-controls="histogram" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Local Simulation</button>
                     </li>
                     {% endif %}
-                    {% if hardware_counts %}
+                    {% if hardware_counts or hardware_histogram %}
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="hardware-tab" data-bs-toggle="tab" data-bs-target="#hardware" type="button" role="tab" aria-controls="hardware" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Hardware Results</button>
+                        <button class="nav-link" id="counts-histogram-tab" data-bs-toggle="tab" data-bs-target="#counts-histogram" type="button" role="tab" aria-controls="counts-histogram" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Counts and Histograms</button>
+                    </li>
+                    {% endif %}
+                    {% if comparison_img %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab" aria-controls="comparison" aria-selected="false" style="color: var(--text-secondary); font-size: 1.1rem; padding: 0.75rem 1.5rem;">Comparison</button>
                     </li>
                     {% endif %}
                     {% if expectation_value is not none %}
@@ -113,19 +128,31 @@
                         <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ result_sim }}</pre>
                     </div>
                     {% endif %}
-                    {% if hardware_counts %}
-                    <div class="tab-pane fade" id="hardware" role="tabpanel" aria-labelledby="hardware-tab">
-                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Hardware Results</h3>
-                        <!-- Hardware Histogram -->
+                    {% if hardware_counts or hardware_histogram %}
+                    <div class="tab-pane fade" id="counts-histogram" role="tabpanel" aria-labelledby="counts-histogram-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Hardware Counts and Histogram</h3>
                         {% if hardware_histogram %}
                         <h4 class="mb-3" style="color: var(--text-primary); font-size: 1.1rem; font-weight: 500;">Hardware Histogram</h4>
                         <div class="d-flex justify-content-center">
-                            <img src="data:image/png;base64,{{ hardware_histogram }}" alt="Hardware Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                            <img src="data:image/png;base64,{{ hardware_histogram }}" alt="Hardware Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;" id="hardwareHistogramImg">
                         </div>
+                        {% else %}
+                        <p class="text-muted">Hardware histogram not available yet.</p>
                         {% endif %}
-                        <!-- Hardware Counts -->
+                        {% if hardware_counts %}
                         <h4 class="mb-3" style="color: var(--text-primary); font-size: 1.1rem; font-weight: 500;">Hardware Counts</h4>
-                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);">{{ hardware_counts }}</pre>
+                        <pre class="text-sm p-3 rounded" style="background: #111827; color: var(--text-secondary);" id="hardwareCountsPre">{{ hardware_counts }}</pre>
+                        {% else %}
+                        <p class="text-muted">Hardware counts not available yet.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if comparison_img %}
+                    <div class="tab-pane fade" id="comparison" role="tabpanel" aria-labelledby="comparison-tab">
+                        <h3 class="mb-3" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 500;">Simulation vs Hardware Comparison</h3>
+                        <div class="d-flex justify-content-center">
+                            <img src="data:image/png;base64,{{ comparison_img }}" alt="Comparison Histogram" class="img-fluid rounded shadow-sm" style="max-width: 100%; max-height: 400px;">
+                        </div>
                     </div>
                     {% endif %}
                     {% if expectation_value is not none %}
@@ -144,78 +171,94 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const jobId = '{{ job_id or "" }}';
+        const jobIdForm = document.getElementById('jobIdForm');
+        const retrieveBtn = document.getElementById('retrieveBtn');
+        const retrieveBtnText = document.getElementById('retrieveBtnText');
+        const retrieveSpinner = document.getElementById('retrieveSpinner');
         const errorContainer = document.getElementById('errorContainer');
-        if (jobId) {
-            const checkJobStatus = async () => {
-                try {
-                    const response = await fetch(`/job_status/${jobId}`);
-                    const data = await response.json();
-                    const jobStatusElement = document.getElementById('jobStatus');
-                    const queuePositionElement = document.getElementById('queuePosition');
-                    const estimatedWaitElement = document.getElementById('estimatedWait');
+        const resultsTab = document.getElementById('resultsTab');
+        const resultsTabContent = document.getElementById('resultsTabContent');
+        const jobStatusElement = document.getElementById('jobStatus');
+        const queuePositionElement = document.getElementById('queuePosition');
+        const estimatedWaitElement = document.getElementById('estimatedWait');
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
-                    if (response.ok) {
-                        // Update status
-                        jobStatusElement.textContent = data.status || 'Pending';
+        jobIdForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('job_id').value.trim();
+            if (!jobId || jobId.length < 8) {
+                errorContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
+                        <ul class="mb-0">
+                            <li>Please enter a valid Job ID (minimum 8 characters).</li>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+                return;
+            }
 
-                        // Update queue info
-                        if (data.queue_info) {
-                            queuePositionElement.textContent = data.queue_info.position !== null ? data.queue_info.position : 'Not available';
-                            estimatedWaitElement.textContent = data.queue_info.estimated_wait_seconds !== null ? `${Math.floor(data.queue_info.estimated_wait_seconds / 60)} minutes` : 'Not available';
-                        } else {
-                            queuePositionElement.textContent = 'Not available';
-                            estimatedWaitElement.textContent = 'Not available';
-                        }
+            retrieveBtn.disabled = true;
+            retrieveBtnText.textContent = 'Retrieving...';
+            retrieveSpinner.classList.remove('d-none');
 
-                        // Only reload for final states
-                        if (data.status === 'DONE' || data.status === 'CANCELLED') {
-                            location.reload();
-                        } else if (data.status === 'FAILED' || data.status === 'ERROR') {
-                            // Show error message but continue polling
-                            errorContainer.innerHTML = `
-                                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
-                                    <ul class="mb-0">
-                                        <li>Job ${jobId} reported as ${data.status}. ${data.error ? data.error : 'Please check the IBM Quantum dashboard for details.'}</li>
-                                    </ul>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            `;
-                            // Continue polling to catch status changes
-                            setTimeout(checkJobStatus, 10000); // Slower polling for failed/error states
-                        } else {
-                            // Continue polling for non-final states
-                            setTimeout(checkJobStatus, 5000);
-                        }
-                    } else {
-                        // Handle HTTP errors
-                        jobStatusElement.textContent = 'Error';
-                        errorContainer.innerHTML = `
-                            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
-                                <ul class="mb-0">
-                                    <li>Failed to retrieve job status: ${data.error || 'Unknown error'}</li>
-                                </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        `;
-                        setTimeout(checkJobStatus, 10000); // Retry after delay
-                    }
-                } catch (error) {
-                    console.error('Error checking job status:', error);
-                    document.getElementById('jobStatus').textContent = 'Error';
-                    errorContainer.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: #EF4444; font-size: 1rem;">
-                            <ul class="mb-0">
-                                <li>Network error checking job status: ${error.message}</li>
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
-                    setTimeout(checkJobStatus, 10000); // Retry after delay
+            const formData = new FormData();
+            formData.append('job_id', jobId);
+            formData.append('csrf_token', csrfToken);
+
+            fetch('/hardware_results', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-Token': csrfToken
                 }
-            };
-            checkJobStatus();
-        }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newErrorContainer = doc.getElementById('errorContainer').innerHTML;
+                const newResultsTab = doc.getElementById('resultsTab').innerHTML;
+                const newResultsTabContent = doc.getElementById('resultsTabContent').innerHTML;
+                const newJobStatus = doc.getElementById('jobStatus').innerHTML;
+                const newQueuePosition = doc.getElementById('queuePosition').innerHTML;
+                const newEstimatedWait = doc.getElementById('estimatedWait').innerHTML;
+
+                errorContainer.innerHTML = newErrorContainer;
+                resultsTab.innerHTML = newResultsTab;
+                resultsTabContent.innerHTML = newResultsTabContent;
+                jobStatusElement.innerHTML = newJobStatus;
+                queuePositionElement.innerHTML = newQueuePosition;
+                estimatedWaitElement.innerHTML = newEstimatedWait;
+
+                // Activate the Counts and Histograms tab if available
+                const countsHistogramTab = document.getElementById('counts-histogram-tab');
+                if (countsHistogramTab) {
+                    countsHistogramTab.click();
+                }
+
+                retrieveBtn.disabled = false;
+                retrieveBtnText.textContent = 'Retrieve Results';
+                retrieveSpinner.classList.add('d-none');
+            })
+            .catch(error => {
+                console.error('Retrieve job results error:', error);
+                retrieveBtn.disabled = false;
+                retrieveBtnText.textContent = 'Retrieve Results';
+                retrieveSpinner.classList.add('d-none');
+                errorContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(239, 68, 186, 0.2); border-color: #EF4444; font-size: 1rem;">
+                        <ul class="mb-0">
+                            <li>Failed to retrieve job results: ${error.message.includes('401') ? 'Invalid token or session expired.' : error.message}</li>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+            });
+        });
     });
 </script>
 {% endblock %}

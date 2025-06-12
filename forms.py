@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, IntegerField, FloatField, TextAreaField, BooleanField
-from wtforms.validators import DataRequired, Email, EqualTo, NumberRange, Optional
+from wtforms.validators import DataRequired, Email, EqualTo, NumberRange, Optional, Length
 from Quantum_simulator import config
 
 
@@ -67,3 +67,7 @@ class HardwareSimulationForm(FlaskForm):
     shots = IntegerField('Shots', validators=[NumberRange(min=config.MIN_SHOTS, max=config.MAX_SHOTS)])
     connect = SubmitField('Connect')
     submit = SubmitField('Run Simulation')
+
+class JobIDForm(FlaskForm):
+    job_id = StringField('Job ID', validators=[DataRequired(), Length(min=8, max=36, message="Job ID must be between 8 and 36 characters.")])
+    submit = SubmitField('Retrieve Results')

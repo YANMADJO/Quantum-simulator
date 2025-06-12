@@ -14,7 +14,6 @@ try:
     from newsapi import NewsApiClient
 except ImportError:
     NewsApiClient = None
-# Qiskit Imports
 from qiskit import QuantumCircuit, transpile
 from qiskit.qasm2 import dumps as qasm2_dumps
 from qiskit_aer import AerSimulator
@@ -23,12 +22,10 @@ from qiskit.visualization import plot_histogram
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerOptions, EstimatorOptions
 from qiskit_ibm_runtime import SamplerV2 as Sampler, EstimatorV2 as Estimator
-# Flask and Related Imports
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import CSRFProtect
 from flask_caching import Cache
-# Local Module Imports
 from Quantum_simulator import database, config, forms, utils, hardware_utils
 
 # Application Configuration
@@ -381,8 +378,7 @@ def circuit_simulation():
 def hardware_simulation():
     logging.debug(f"Accessing hardware simulation page for user {current_user.username}")
     form = forms.HardwareSimulationForm()
-    outputs = {'circuit_diagram': None, 'result_sim': None, 'histogram_sim': None, 'comparison_img': None,
-               'hardware_counts': None, 'job_id': None, 'expectation_value': None}
+    outputs = {'circuit_diagram': None, 'result_sim': None, 'histogram_sim': None}
     python_code = (request.form.get('python_code') or session.get('python_code') or request.args.get('python_code') or None)
     errors = []
     connected = 'backends' in session
@@ -428,8 +424,9 @@ def hardware_simulation():
             if not success:
                 logging.error(f"Simulation failed: {result}")
                 errors.append(result)
-                return jsonify({"success": False, "message": result}), 400
-            return jsonify({"success": True, **result})
+                return render_template('hardware_simulation.html', form=form, errors=errors, python_code=python_code)
+            flash(f"Job submitted successfully! Job ID: {result['job_id']}", 'success')
+            return redirect(url_for('hardware_results'))
 
     return render_template('hardware_simulation.html', form=form, **outputs, errors=errors, python_code=python_code,
                            connected=connected)
@@ -491,7 +488,7 @@ def run_hardware_simulation():
     if not success:
         logging.error(f"Simulation failed: {result}")
         return jsonify({"success": False, "message": result}), 400
-    return jsonify({"success": True, **result})
+    return jsonify({"success": True, "job_id": result['job_id'], "redirect": "/hardware_results"})
 
 @app.route('/job_status/<job_id>', methods=['GET'])
 def job_status(job_id):
@@ -507,52 +504,54 @@ def job_status(job_id):
 @login_required
 def hardware_results():
     logging.debug(f"Accessing hardware results for user {current_user.username}")
-    form = forms.HardwareSimulationForm()
-    job_id = request.form.get('job_id') or session.get('current_job_id')
-    if not job_id and request.method == 'POST':
-        flash('Please enter a valid Job ID.', 'error')
-        return render_template('hardware_results.html', form=form, queue_info={},
-                               errors=['No job ID provided'], connected='backends' in session)
-
-    handler = hardware_utils.HardwareSimulationHandler(session.get('ibm_token'))
-    if not handler.service and session.get('ibm_token'):
-        logging.debug(f"Handler not connected, attempting to reconnect with session token")
-        handler.connect_to_ibm_quantum(session.get('ibm_token'))
-    job_result = handler.check_job_status(job_id) if job_id else {'status': 'Pending'}
-
-    circuit_diagram = hardware_utils.image_cache.get(session.get('circuit_image_id'))
-    histogram_sim = hardware_utils.image_cache.get(session.get('histogram_image_id'))
-    counts_sim = session.get('counts_sim')
-    queue_info = job_result.get('queue_info', {'position': None, 'estimated_wait_seconds': None})
-
-    # Generate comparison histogram if both counts are available
-    comparison_img = None
-    if job_result.get('status') == 'Completed' and counts_sim and job_result.get('hardware_counts'):
-        comparison_img = utils.generate_comparison_histogram(counts_sim, job_result['hardware_counts'])
-        if not comparison_img:
-            logging.warning("Failed to generate comparison histogram")
-
-    # Generate hardware histogram if hardware counts are available
-    hardware_histogram = None
-    if job_result.get('status') == 'Completed' and job_result.get('hardware_counts'):
-        hardware_histogram = utils.generate_histogram_image(job_result['hardware_counts'])
-        if not hardware_histogram:
-            logging.warning("Failed to generate hardware histogram")
-
+    form = forms.JobIDForm()
     outputs = {
-        'circuit_diagram': circuit_diagram,
-        'histogram_sim': histogram_sim,
-        'result_sim': str(counts_sim) if counts_sim else None,
-        'hardware_counts': job_result.get('hardware_counts'),
-        'hardware_histogram': hardware_histogram,  # Add this to outputs
-        'expectation_value': job_result.get('expectation_value'),
-        'job_id': job_id,
-        'job_status': job_result['status'],
-        'queue_info': queue_info,
-        'comparison_img': comparison_img
+        'circuit_diagram': None,
+        'result_sim': None,
+        'histogram_sim': None,
+        'hardware_counts': None,
+        'hardware_histogram': None,
+        'comparison_img': None,
+        'expectation_value': None,
+        'job_id': None,
+        'job_status': 'Pending',
+        'queue_info': {'position': None, 'estimated_wait_seconds': None}
     }
+    errors = []
+    connected = 'backends' in session
 
-    return render_template('hardware_results.html', form=form, **outputs, errors=job_result.get('error', []), connected='backends' in session)
+    if request.method == 'POST' and form.validate_on_submit():
+        job_id = form.job_id.data
+        handler = hardware_utils.HardwareSimulationHandler(session.get('ibm_token'))
+        if not handler.service and session.get('ibm_token'):
+            logging.debug(f"Handler not connected, attempting to reconnect with session token")
+            success, message = handler.connect_to_ibm_quantum(session.get('ibm_token'))
+            if not success:
+                errors.append(message)
+                return render_template('hardware_results.html', form=form, **outputs, errors=errors, connected=connected)
+
+        job_result = handler.check_job_status(job_id)
+        if job_result['status'] == 'Failed':
+            errors.append(job_result.get('error', 'Failed to retrieve job results.'))
+        else:
+            outputs['job_id'] = job_id
+            outputs['job_status'] = job_result['status']
+            outputs['queue_info'] = job_result.get('queue_info', {'position': None, 'estimated_wait_seconds': None})
+            outputs['hardware_counts'] = job_result.get('hardware_counts')
+            outputs['hardware_histogram'] = job_result.get('hardware_histogram')
+            outputs['expectation_value'] = job_result.get('expectation_value')
+            # Fetch circuit diagram and simulation results from session if available
+            outputs['circuit_diagram'] = hardware_utils.image_cache.get(session.get('circuit_image_id'))
+            outputs['result_sim'] = str(session.get('counts_sim')) if session.get('counts_sim') else None
+            outputs['histogram_sim'] = hardware_utils.image_cache.get(session.get('histogram_image_id'))
+            # Generate comparison histogram if both counts are available
+            if outputs['hardware_counts'] and session.get('counts_sim'):
+                outputs['comparison_img'] = utils.generate_comparison_histogram(session.get('counts_sim'), outputs['hardware_counts'])
+
+    elif request.method == 'POST':
+        errors.append('Invalid Job ID. Please enter a valid Job ID.')
+
+    return render_template('hardware_results.html', form=form, **outputs, errors=errors, connected=connected)
 
 # Routes: News and Papers
 @app.route('/news', methods=['GET', 'POST'])
