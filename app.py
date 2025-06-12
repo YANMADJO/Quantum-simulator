@@ -26,7 +26,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import CSRFProtect
 from flask_caching import Cache
-from Quantum_simulator import database, config, forms, utils, hardware_utils
+from Quantum_simulator import database, config, forms, utils, hardware_utils #if it gives error, rename the main file to Quantum_simulator
 
 # Application Configuration
 logging.basicConfig(level=logging.DEBUG)
